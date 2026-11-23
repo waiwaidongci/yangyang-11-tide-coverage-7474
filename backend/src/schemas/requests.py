@@ -53,3 +53,27 @@ class ScheduleInput(BaseModel):
         if value is not None and value.utcoffset() is None:
             raise ValueError('首次分发时间必须包含时区')
         return value
+
+
+class CorrectionSegment(BaseModel):
+    zone: str = Field(min_length=1, max_length=20)
+    action: str = Field(default='可作业', max_length=8)
+    start_minute: int = Field(ge=0, le=1440)
+    end_minute: int = Field(ge=1, le=1440)
+    frontage_m: int | None = None
+
+
+class CorrectionInput(BaseModel):
+    work_date: str = Field(min_length=10, max_length=10)
+    shift: str = Field(min_length=1, max_length=8)
+    code: str = Field(min_length=1, max_length=96)
+    segments: list[CorrectionSegment] = Field(min_length=1, max_length=200)
+    target_coverage_pct: float = Field(default=90, ge=0, le=100)
+    idempotency_key: str | None = Field(default=None, max_length=96)
+
+    @field_validator('code')
+    @classmethod
+    def meaningful_code(cls, value):
+        if not value.strip():
+            raise ValueError('请填写潮窗更正编号')
+        return value.strip()

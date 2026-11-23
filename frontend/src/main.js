@@ -5,12 +5,13 @@ import { loginPage, wireLogin } from './pages/login.js';
 import { observationPage, wireObservations } from './pages/observations.js';
 import { reportPage, wireReports } from './pages/reports.js';
 import { resultPage, wireResult } from './pages/result.js';
+import { shiftPage, wireShift } from './pages/shift.js';
 import { route } from './router/hash.js';
 import { store } from './stores/session.js';
 import { esc } from './utils/html.js';
 
 const root = document.getElementById('app');
-const pages = {observations:observationPage,analysis:analysisPage,result:resultPage,reports:reportPage};
+const pages = {observations:observationPage,analysis:analysisPage,result:resultPage,reports:reportPage,shift:shiftPage};
 let navigationTick = 0;
 
 async function render() {
@@ -39,6 +40,7 @@ async function render() {
     if (current.page === 'analysis') wireAnalysis(root,spec);
     if (current.page === 'result') wireResult(root,render);
     if (current.page === 'reports') wireReports(root,render);
+    if (current.page === 'shift') wireShift(root,render);
   } catch (err) {
     if (tick !== navigationTick) return;
     const standalone = `<section class="panel recovery"><h1>页面加载失败</h1><p role="alert">${esc(err.message)}</p><button class="primary" id="retry">重试</button></section>`;

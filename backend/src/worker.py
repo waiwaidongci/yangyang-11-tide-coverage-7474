@@ -8,6 +8,7 @@ from src.models.base import Session
 from src.services.broker import redis
 from src.services.delivery import dispatch_pending
 from src.services.runs import run_pending
+from src.services.shift_reports import run_pending_reports
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,9 +21,11 @@ def main():
             with Session.begin() as db:
                 ran = run_pending(db)
             with Session.begin() as db:
+                reported = run_pending_reports(db)
+            with Session.begin() as db:
                 dispatched = dispatch_pending(db)
             redis.set(HEARTBEAT, 'yes', ex=12)
-            if not ran and not dispatched:
+            if not ran and not reported and not dispatched:
                 redis.blpop('desk:wake', timeout=1)
         except Exception:
             logger.exception('Worker could not finish its cycle')

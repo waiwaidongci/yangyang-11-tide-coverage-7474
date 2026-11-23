@@ -16,3 +16,15 @@ class RunStatus(StrEnum):
 class Decision(StrEnum):
     APPROVED = 'approved'
     RETURNED = 'returned'
+
+
+class VersionStatus(StrEnum):
+    QUEUED = 'queued'
+    SUCCEEDED = 'succeeded'
+    FAILED = 'failed'
+    SUPERSEDED = 'superseded'
+
+
+class WindowAction(StrEnum):
+    WORKABLE = '可作业'
+    CLOSED = '禁作业'

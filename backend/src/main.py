@@ -12,9 +12,12 @@ from src.config.runtime import SEED_DEMO
 from src.middlewares.headers import response_headers
 from src.middlewares.trace import trace_request
 from src.models.base import Base, Session, engine
-from src.routes import analysis, records, reports, session
+from src.routes import analysis, records, reports, session, shifts
 from src.services.broker import redis
 from src.services.errors import BusinessError
+from src.services.shift_reports import ensure_baseline
+from src.models.workflow import Observation
+from sqlalchemy import select
 
 logger = logging.getLogger('uvicorn.error')
 
@@ -27,13 +30,30 @@ async def lifespan(_app):
             logger.info('demo row counts %s', seed_data())
         except Exception:
             logger.exception('demo seed failed')
+    try:
+        ensure_demo_reports()
+    except Exception:
+        logger.exception('demo shift report bootstrap failed')
     yield
+
+
+def ensure_demo_reports():
+    """Queue a correction-free baseline report for every seeded shift."""
+
+    with Session.begin() as db:
+        shifts = {
+            (row.payload.get('work_date'), row.payload.get('shift'))
+            for row in db.execute(select(Observation)).scalars()
+        }
+        for work_date, shift in sorted(shifts):
+            if work_date and shift:
+                ensure_baseline(db, work_date, shift)
 
 
 app = FastAPI(title=SPEC['title'], lifespan=lifespan)
 app.middleware('http')(trace_request)
 app.middleware('http')(response_headers)
-for module in (session, records, analysis, reports):
+for module in (session, records, analysis, reports, shifts):
     app.include_router(module.router)
 
 
